@@ -19,6 +19,7 @@
 		>
 			<LeftBar
 				v-model:value="currentConversationId"
+				@update:value="conSelect()"
 				:class="['h-full pt-4 px-4 box-border mb-4 overflow-hidden flex flex-col space-y-4']"
 				:loading="loadingAsk"
 				:cs="conversations"
@@ -98,9 +99,9 @@
 
 <script setup lang="ts">
 import {ArrowDown, ChatboxEllipses} from '@vicons/ionicons5';
-import {useStorage} from '@vueuse/core';
+import {reactify, useStorage} from '@vueuse/core';
 import {NButton, NIcon, useThemeVars} from 'naive-ui';
-import {computed, ref, watch} from 'vue';
+import {computed, onMounted, reactive, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 
 import {getArkoseInfo} from '@/api/arkose';
@@ -128,7 +129,7 @@ import LeftBar from '@/views/conversation/components/LeftBar.vue';
 
 import {saveAsMarkdown} from './utils/export';
 import {buildTemporaryMessage, modifiyTemporaryMessageContent} from './utils/message';
-import {sendMsga} from "@/api/user";
+import {getHistory, getMsgDetail, sendMsga} from "@/api/user";
 
 const themeVars = useThemeVars();
 
@@ -145,7 +146,7 @@ const conversationStore = useConversationStore();
 
 const loadingAsk = ref(false);
 const loadingHistory = ref<boolean>(false);
-const autoScrolling = useStorage('autoScrolling', true);
+const autoScrolling = ref(true)
 
 const isAborted = ref<boolean>(false);
 const canAbort = ref<boolean>(false);
@@ -191,7 +192,7 @@ const uploadMode = computed(() => {
 // 实际的 currentMessageList，加上当前正在发送的消息
 const currentActiveMessages = computed<Array<BaseChatMessage>>(() => {
 	const result: BaseChatMessage[] = [];
-	if (currentSendMessage.value) result.push(currentSendMessage.value);
+	if (currentSendMessage.value) result.concat(currentSendMessage.value);
 	for (const msg of currentRecvMessages.value) {
 		result.push(msg);
 	}
@@ -245,11 +246,12 @@ const makeNewConversation = () => {
 			"modeType": newConversationInfo.model,
 			"messages": ""
 		})
-		if (result.data.code !== '1') {
+		if (result.data.code === '1') {
 			const r = result.data.data;
 			const id = r.conversationId;
 			const messages = r.messages
 			conversations.value.push({...newConversationInfo, id, messages})
+			console.log(conversations)
 			currentConversationId.value = id
 		} else {
 			Message.error('接口异常');
@@ -284,14 +286,22 @@ const sendMsg = async () => {
 	if (sendDisabled.value || loadingAsk.value) {
 		return;
 	}
-	// const model =conversations.value.find( i => i.id === currentConversationId.value ) ;
-	// debugger
-	// await sendMsga({
-	// 	"conversationId": "string",
-	// 	"content": "string",
-	// 	"modeType": "string",
-	// 	"messages": "string"
-	// })
+	loadingAsk.value = true
+	const model = conversations.value.find((i: any) => i.id === currentConversationId.value);
+	const result = await sendMsga({
+		"conversationId": model.id,
+		"content": inputValue.value,
+		"modeType": model.model,
+		"messages": model.message
+	})
+	loadingAsk.value = false
+	if (result.data.code === '1') {
+		model.message = result.data.data.messages;
+		currentRecvMessages.value = JSON.parse(result.data.data.messages)
+		inputValue.value = ''
+	} else {
+		Message.error(result.data.msg)
+	}
 };
 
 const exportToMarkdownFile = () => {
@@ -327,6 +337,40 @@ const exportToPdfFile = () => {
 
 // 加载对话列表
 // conversationStore.fetchAllConversations().then();
+const query = reactive({
+	pageIndex: 1,
+	pageSize: 30
+})
+const getHis = async () => {
+	const result = await getHistory(query)
+	if (result.data.code === '1') {
+		conversations.value = (result.data.data.list || []).map((i: any) => {
+			return {
+				id: i.id,
+				message: '',
+				model: i.model,
+				title: i.title
+			}
+		})
+	} else {
+		return Message.error(result.data.msg)
+	}
+}
+
+const conSelect = async () => {
+	const result = await getMsgDetail(currentConversationId.value);
+	if (result.data.code === '1') {
+		const his = JSON.parse(result.data.data.chatRequst)
+		currentRecvMessages.value = his
+		const item = conversations.value.find((i: any) => i.id === currentConversationId.value)
+		if (item) item.message = result.data.data.chatRequst
+	} else {
+		Message.error(result.data.msg)
+	}
+}
+onMounted(() => {
+	getHis()
+})
 </script>
 
 <style>

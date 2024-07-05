@@ -109,9 +109,7 @@ const contentRef = ref();
 const historyContentParent = ref<HTMLElement>();
 const _fullscreen = ref(false);
 const modelName = computed<string>(() => {
-	console.log(props.cs)
 	const item = props.cs.find(i => i.id === props.conversationId)
-	console.log(item)
 	return item ? item.model : '位置'
 });
 const convHistory = computed<BaseConversationHistory | null>(() => {

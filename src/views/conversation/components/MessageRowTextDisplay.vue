@@ -35,7 +35,6 @@ const renderedContent = computed(() => {
   if (!props.renderMarkdown) {
     return content.value;
   }
-  console.log;
   const result = dompurifyRenderedHtml(md.render(content.value || ''));
   return processPreTags(result, appStore.preference.codeAutoWrap);
 });

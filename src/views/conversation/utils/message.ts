@@ -43,20 +43,21 @@ export type PluginAction = {
 
 export function determineMessageType(group: BaseChatMessage[]): DisplayItemType | null {
   // api 仅有 text 类型
-  if (group[0].source == 'openai_api') {
-    if (group[0].content?.content_type !== 'text') {
-      console.error('wrong content type in openai_api message', group);
-    }
-    return 'text';
-  }
-  for (const message of group) {
-    if (message.source !== 'openai_web') {
-      console.error('wrong message mixed in non-text content group', group);
-      return null;
-    }
-  }
+  // if (group[0].source == 'openai_api') {
+  //   if (group[0].content?.content_type !== 'text') {
+  //     console.error('wrong content type in openai_api message', group);
+  //   }
+  //   return 'text';
+  // }
+  // for (const message of group) {
+  //   if (message.source !== 'openai_web') {
+  //     console.error('wrong message mixed in non-text content group', group);
+  //     return null;
+  //   }
+  // }
 
   let displayType: DisplayItemType | null = null;
+  debugger
   const textOrMultimodal = (message: BaseChatMessage) => {
     if (message.content?.content_type == 'text') {
       return 'text';

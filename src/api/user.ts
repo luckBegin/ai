@@ -23,6 +23,14 @@ export function getModel(data: any) {
 export function sendMsga (data:any) {
   return axios.post('http://47.92.249.48:8099/api/Chat/SendMessage', data )
 }
+
+export function getHistory( data: any ) {
+  return axios.get('http://47.92.249.48:8099/api/Conversation/Historys', data)
+}
+
+export function getMsgDetail( data: any ) {
+  return axios.get('http://47.92.249.48:8099/api/Conversation/Get?id=' +  data)
+}
 export function loginApi(data: LoginData) {
   const formData = new FormData();
   formData.set('username', data.username);

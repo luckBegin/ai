@@ -54,21 +54,21 @@
         </template>
         {{ $t('tips.autoScrolling') }}
       </n-tooltip>
-      <n-button secondary type="info" size="small" @click="emits('show-fullscreen-history')">
+      <n-button secondary type="info" size="small" @click="emits('show-fullscreen-history')" style="visibility: hidden">
         <template #icon>
           <n-icon :size="22">
             <FullscreenRound />
           </n-icon>
         </template>
       </n-button>
-      <n-button secondary type="primary" size="small" @click="emits('export-to-markdown-file')">
+      <n-button secondary type="primary" size="small" @click="emits('export-to-markdown-file')" style="visibility: hidden">
         <template #icon>
           <n-icon>
             <LogoMarkdown />
           </n-icon>
         </template>
       </n-button>
-      <n-button secondary type="warning" size="small" @click="emits('export-to-pdf-file')">
+      <n-button secondary type="warning" size="small" @click="emits('export-to-pdf-file')"  style="visibility: hidden">
         <template #icon>
           <n-icon>
             <Print />
