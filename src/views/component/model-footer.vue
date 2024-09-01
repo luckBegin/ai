@@ -10,7 +10,9 @@
 				type="textarea"
 				placeholder="输入你要问的问题"
 			/>
-			<img src="@/assets/submit.png" alt="" class='text-btn'>
+			<img src="@/assets/submit.png" alt="" class='text-btn' @click='submit()'
+				 :style="{ opacity: submitBtn.o , cursor: submitBtn.c }"
+			>
 		</div>
 		<div class='text-footer'>
 			<div class="text-footer-icon">
@@ -25,9 +27,22 @@
 </template>
 
 <script setup lang='ts'>
-import {ref, reactive, onMounted, onBeforeUnmount} from "vue";
+import {ref, computed, onMounted, onBeforeUnmount} from "vue";
 
+const emits = defineEmits(['update']);
 const text = ref('')
+const submitBtn = computed(() => {
+	return {
+		o: text.value.length !== 0 ? 1 : 0.6,
+		c: text.value.length !== 0 ? 'pointer' : 'not-allowed'
+	}
+})
+
+const submit = () => {
+	emits('update', text.value)
+	text.value = ''
+}
+
 onMounted(() => {
 })
 
@@ -47,21 +62,25 @@ onBeforeUnmount(() => {
 		flex-direction: row;
 		justify-content: flex-start;
 		align-items: flex-end;
-		&> .text-input:deep(.el-textarea__inner) {
-			&::-webkit-scrollbar{
-				width: 6px ;
-				height: 6px ;
+
+		& > .text-input:deep(.el-textarea__inner) {
+			&::-webkit-scrollbar {
+				width: 6px;
+				height: 6px;
 			}
+
 			&::-webkit-scrollbar-thumb {
-				border-radius: 3px ;
-				-moz-border-radius: 3px ;
-				-webkit-border-radius: 3px ;
-				background-color: #c3c3c3 ;
+				border-radius: 3px;
+				-moz-border-radius: 3px;
+				-webkit-border-radius: 3px;
+				background-color: #c3c3c3;
 			}
+
 			&::-webkit-scrollbar-track {
-				background-color: transparent ;
+				background-color: transparent;
 			}
 		}
+
 		& > .text-input:deep(textarea) {
 			width: 100%;
 			border-radius: 2.083rem;
@@ -74,6 +93,11 @@ onBeforeUnmount(() => {
 			box-shadow: 0.26rem 0.26rem 1.042rem 0 rgba(48, 108, 233, 0.2);
 			resize: none;
 			outline: none;
+		}
+
+
+		& > .submit-disable {
+			opacity: 0.4;
 		}
 
 		& > .text-btn {

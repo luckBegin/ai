@@ -1,25 +1,22 @@
-import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router'
+import {createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw} from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
 	{
-		path: '/',
+		path: '/login',
 		name: 'login',
 		component: () => import(/* webpackChunkName: "about" */ '../views/login.vue')
 	},	{
-		path: '/main',
+		path: '/',
 		name: 'main',
-		component: () => import(/* webpackChunkName: "about" */ '../App.vue'),
-		children: [
-			{
-				path: '',
-				name: "dialog",
-				component: import(/* webpackChunkName: "about" */ '../views/dialog.vue'),
-			}
-		]
+		component: () => import(/* webpackChunkName: "about" */ '../views/dialog.vue'),
+		beforeEnter: (to,from,next) => {
+			const t = localStorage.getItem('token')
+			return t ? next() : next('/login');
+		},
 	}
 ]
 
 const router = createRouter({
-	history: createWebHistory(process.env.BASE_URL),
+	history: createWebHashHistory(process.env.BASE_URL),
 	routes
 })
 

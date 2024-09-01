@@ -2,19 +2,49 @@
 	<div class="model-select-wrapper">
 		<el-select  style="width: 10.417rem;" size="large" class="model-select"
 					placeholder="请选择模型"
+					v-model="data"
+					@change="modelChange()"
+					:disabled="!!props.value"
 		>
 			<el-option
-				key="item.value"
-				label="item.label"
-				value="item.value"
+				v-for="d in props.data"
+				:key="d.name"
+				:label="d.name"
+				:value="d.value"
 			/>
 		</el-select>
 	</div>
 </template>
 
 <script setup lang='ts'>
-import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
+import {ref, reactive, onMounted, onBeforeUnmount, watch} from "vue";
+const props = defineProps(['data', 'value']);
+const data = ref('');
+
+const emits = defineEmits(['update']);
+
+const modelChange = () => {
+	const v = props.data.find( (i:any) => i.value === data.value );
+	emits('update', v)
+}
+const setModel = () => {
+	if( props.value ) {
+		data.value = props.value
+	} else {
+		const m = props.data.find( (i: any) => i.name === '综合模型gpt-3.5-turbo') ;
+		if( m ) {
+			data.value = m.name ;
+		}  else {
+			data.value = props.data[0].name
+		}
+	}
+
+}
+watch(props, (v) => {
+	setModel()
+})
 onMounted(() => {
+	setModel()
 })
 
 onBeforeUnmount(() => {
