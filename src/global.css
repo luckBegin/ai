@@ -1,3 +1,6 @@
 .el-select-dropdown__item {
     height: 3.646rem !important;
 }
+.option-wrapper {
+    height: 34px !important;
+}

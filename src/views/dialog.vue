@@ -8,7 +8,8 @@
 				<div class="image-icon" @click="switchType(1)"
 					 :class="{'image-icon-active': 1 === type }"
 				>
-					<img src="@/assets/1.png" alt="">
+					<img src="@/assets/1.png" v-if='type !== 1'>
+					<img src="@/assets/1-active.png" v-if='type === 1'>
 				</div>
 				<!--				<div class="image-icon">-->
 				<!--					<img src="@/assets/2.png" alt="">-->
@@ -19,7 +20,8 @@
 				<div class="image-icon" @click="switchType(2)"
 					 :class="{'image-icon-active': 2 === type }"
 				>
-					<img src="@/assets/4.png" alt="">
+					<img src="@/assets/4.png" alt=""  v-if='type !== 2'>
+					<img src="@/assets/4-active.png" alt=""  v-if='type === 2'>
 				</div>
 			</div>
 			<!--			<div class="dialog-left-bottom">-->
@@ -81,17 +83,17 @@ import {nextTick, onMounted, ref} from 'vue'
 import {service} from "@/util/api";
 
 const ai = [ {
-	"name": "gpt-3.5-turbo",
+	"label": "ChatGPT-3.5turbo",
 	"value": "gpt-3.5-turbo",
 	"desc":"日常任务推荐使用，扣费低"
 }, {
-	"name": "gpt-4o",
+	"label": "ChatGPT-4o",
 	"value": "gpt-4o",
 	"desc":"推荐难度高任务使用，处理效果更为准确。扣费高"
 }]
 
 const image = [{
-	"name": "图片dall-e-3模型",
+	"label": "图片dall-e-3模型",
 	"value": "dall-e-3"
 }]
 const models = ref(ai)
@@ -159,6 +161,7 @@ const update = (s: string) => {
 		"modeType": aiModel.value,
 		"messages": ""
 	}
+
 	if (conversationDetail.value.id) {
 		data.conversationId = conversationDetail.value.id
 		data.content = s
@@ -173,22 +176,24 @@ const update = (s: string) => {
 				model: aiModel.value,
 				title: s
 			}
+
 			if (!conversationDetail.value.id) {
 				historyList.value.unshift(data)
 			}
+
 			current.value = data
 			const dialog = JSON.parse(r.data.messages);
 			conversationDetail.value = {
 				id: data.id,
 				model: data.model,
-				dialog: dialog.filter((v: any) => v.role !== 'system')
+				dialog: dialog.filter((v: any) => v.role !== 'system'),
+				raw: r.data.messages
 			}
 
 			nextTick(() => {
 				con.value.init(conversationDetail.value, true)
 			})
 		}
-
 	})
 }
 
