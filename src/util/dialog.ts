@@ -11,7 +11,7 @@ export class Dialog {
 
 	private content: string
 	private contentArr: Array<string> = []
-	private interval = 50;
+	private interval = 15;
 
 	constructor(type: DialogType, text: string, model: string) {
 		this.type = type

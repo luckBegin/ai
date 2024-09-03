@@ -15,4 +15,5 @@
 	height: 100% ;
 	background: url("@/assets/bg.png") round;
 }
+
 </style>

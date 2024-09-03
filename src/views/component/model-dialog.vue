@@ -35,6 +35,17 @@
 				</div>
 			</div>
 
+			<div v-if="!last.text">
+				<div class="dialog-ai dialog" v-if="last.type === 1">
+					<div class="head">
+						<img src="@/assets/ai.png" alt="">
+					</div>
+
+					<div style="width: 36.458rem;margin-left: 0.521rem">
+						<el-skeleton :rows="3" animated />
+					</div>
+				</div>
+			</div>
 
 			<div v-if="last.text">
 				<div class="dialog-me dialog" v-if="last.type === 0">
@@ -116,12 +127,14 @@ const init = (d: any, print: boolean) => {
 			m.complete();
 			last.text = m.text
 		} else {
-			m.play(s => {
-				last.text = s;
-				if (container.value) {
-					container.value.scrollTop = container.value.scrollHeight;
-				}
-			})
+			setTimeout(() => {
+				m.play(s => {
+					last.text = s;
+					if (container.value) {
+						container.value.scrollTop = container.value.scrollHeight;
+					}
+				})
+			} , 1500)
 		}
 	}
 	dialog.value = arr
@@ -161,6 +174,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+.show {
+	display: block;
+}
+.hide {
+	display: none ;
+}
 .model-dialog {
 	width: 100%;
 	height: 100%;

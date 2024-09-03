@@ -5,13 +5,21 @@
 					v-model="data"
 					@change="modelChange()"
 					:disabled="!!props.value"
+					popper-class="option-wrapper"
+
 		>
 			<el-option
 				v-for="d in props.data"
 				:key="d.name"
 				:label="d.name"
 				:value="d.value"
-			/>
+
+			>
+				<div v-if='d.desc' class = 'desc-wrapper'>
+					<span>{{ d.name }}</span>
+					<span>{{ d.desc }}</span>
+				</div>
+			</el-option>
 		</el-select>
 	</div>
 </template>
@@ -70,6 +78,24 @@ onBeforeUnmount(() => {
 		&:deep(.el-select__placeholder) {
 			color: rgb(51, 51, 51);
 		}
+		&:deep(.el-select-dropdown__item) {
+			height: 100px !important;
+		}
 	}
+}
+.desc-wrapper {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+	height: 100% ;
+	display: flex;
+	& > span:nth-of-type(1) {
+		font-weight: bolder;
+	}
+}
+.option-wrapper:deep(.el-select-dropdown__item){
+	background: red !important;
+	height:200px;
 }
 </style>

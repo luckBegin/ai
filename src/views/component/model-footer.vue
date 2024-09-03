@@ -9,9 +9,11 @@
 				:autosize="{maxRows:5,minRows: 1}"
 				type="textarea"
 				placeholder="输入你要问的问题"
+				@keypress.enter="confirm($event)"
 			/>
-			<img src="@/assets/submit.png" alt="" class='text-btn' @click='submit()'
-				 :style="{ opacity: submitBtn.o , cursor: submitBtn.c }"
+			<img src="@/assets/submit.png" class='text-btn' @click='submit()'
+				 :style="{ cursor: submitBtn.c }"
+				 :class="{'gray': !submitBtn.o }"
 			>
 		</div>
 		<div class='text-footer'>
@@ -33,7 +35,7 @@ const emits = defineEmits(['update']);
 const text = ref('')
 const submitBtn = computed(() => {
 	return {
-		o: text.value.length !== 0 ? 1 : 0.6,
+		o: text.value.length !== 0,
 		c: text.value.length !== 0 ? 'pointer' : 'not-allowed'
 	}
 })
@@ -43,6 +45,17 @@ const submit = () => {
 	text.value = ''
 }
 
+const confirm = ($event: KeyboardEvent) => {
+	if( $event.shiftKey ) {
+		if( text.value.length === 0 ) {
+			$event.preventDefault()
+		}
+	} else {
+		$event.preventDefault();
+		if (text.value) submit()
+	}
+
+}
 onMounted(() => {
 })
 
@@ -51,6 +64,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+.gray {
+	filter: grayscale(100%) !important;
+}
 .model-footer-wrapper {
 	width: 100%;
 	box-sizing: border-box;
@@ -62,7 +78,7 @@ onBeforeUnmount(() => {
 		flex-direction: row;
 		justify-content: flex-start;
 		align-items: flex-end;
-
+		position: relative;
 		& > .text-input:deep(.el-textarea__inner) {
 			&::-webkit-scrollbar {
 				width: 6px;
@@ -85,8 +101,8 @@ onBeforeUnmount(() => {
 			width: 100%;
 			border-radius: 2.083rem;
 			line-height: 1.927rem;
-			padding-left: 1.042rem;
-			padding-right: 1.042rem;
+			padding-left: 2.604rem;
+			padding-right: 3.125rem;
 			border: none;
 			font-size: 0.729rem;
 			background: linear-gradient(180.00deg, rgb(255, 255, 255), rgba(255, 255, 255, 0.5) 100%);
@@ -109,10 +125,9 @@ onBeforeUnmount(() => {
 			cursor: pointer;
 			transition: all .2s linear;
 			opacity: 1;
-
-			&:hover {
-				opacity: 0.8;
-			}
+			position: absolute;
+			right: 1.042rem ;
+			bottom: 0.15625rem;
 		}
 	}
 

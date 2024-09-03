@@ -80,15 +80,14 @@ import ModelDialog from "@/views/component/model-dialog.vue";
 import {nextTick, onMounted, ref} from 'vue'
 import {service} from "@/util/api";
 
-const ai = [{
-	"name": "gpt-4o-2024-08-06(最新推荐)",
-	"value": "gpt-4o-2024-08-06"
+const ai = [ {
+	"name": "gpt-3.5-turbo",
+	"value": "gpt-3.5-turbo",
+	"desc":"日常任务推荐使用，扣费低"
 }, {
-	"name": "综合模型gpt-3.5-turbo",
-	"value": "gpt-3.5-turbo"
-}, {
-	"name": "综合模型gpt-4o",
-	"value": "gpt-4o"
+	"name": "gpt-4o",
+	"value": "gpt-4o",
+	"desc":"推荐难度高任务使用，处理效果更为准确。扣费高"
 }]
 
 const image = [{
@@ -251,7 +250,7 @@ onMounted(() => {
 			}
 
 			& > .image-icon-active {
-				transform: scale(1.1);
+				transform: scale(1.2);
 			}
 
 			& > .image-icon {
@@ -260,7 +259,9 @@ onMounted(() => {
 				margin-top: 1.667rem;
 				cursor: pointer;
 				transition: all .2s linear;
-
+				&:hover {
+					transform: scale(1.2);
+				}
 				& > img {
 					display: block;
 					width: 100%;
