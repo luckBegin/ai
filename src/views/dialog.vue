@@ -20,8 +20,8 @@
 				<div class="image-icon" @click="switchType(2)"
 					 :class="{'image-icon-active': 2 === type }"
 				>
-					<img src="@/assets/4.png" alt=""  v-if='type !== 2'>
-					<img src="@/assets/4-active.png" alt=""  v-if='type === 2'>
+					<img src="@/assets/4.png" alt="" v-if='type !== 2'>
+					<img src="@/assets/4-active.png" alt="" v-if='type === 2'>
 				</div>
 			</div>
 			<!--			<div class="dialog-left-bottom">-->
@@ -59,9 +59,8 @@
 						/>
 					</div>
 					<div class="middle">
-						<model-empty v-if="!conversationDetail.model"/>
-						<model-dialog v-if="conversationDetail.model"
-									  :conversation="conversationDetail"
+						<model-empty v-if="!dialogs.length"/>
+						<model-dialog :conversation="dialogs.length"
 									  ref="con"
 						/>
 					</div>
@@ -77,19 +76,24 @@
 <script lang="ts" setup>
 import modelSelector from './component/model-selector.vue'
 import modelFooter from './component/model-footer.vue'
-import modelEmpty from './component/model-empty.vue'
 import ModelDialog from "@/views/component/model-dialog.vue";
-import {nextTick, onMounted, ref} from 'vue'
+import {onMounted, ref} from 'vue'
 import {service} from "@/util/api";
+import {useStore} from 'vuex'
+import {Dialog, DialogType} from "@/util/dialog";
+import ModelEmpty from "@/views/component/model-empty.vue";
+import {cloneDeep} from "lodash";
 
-const ai = [ {
+const store = useStore();
+
+const ai = [{
 	"label": "ChatGPT-3.5turbo",
 	"value": "gpt-3.5-turbo",
-	"desc":"日常任务推荐使用，扣费低"
+	"desc": "日常任务推荐使用，扣费低"
 }, {
 	"label": "ChatGPT-4o",
 	"value": "gpt-4o",
-	"desc":"推荐难度高任务使用，处理效果更为准确。扣费高"
+	"desc": "推荐难度高任务使用，处理效果更为准确。扣费高"
 }]
 
 const image = [{
@@ -99,8 +103,8 @@ const image = [{
 const models = ref(ai)
 const type = ref(1);
 const modelSelect = ref('')
-
-
+const cid = ref(store.state.id)
+const dialogs = ref(store.state.dialogs)
 const switchType = (t: number) => {
 	if (type.value === t) return
 	if (t === 1) {
@@ -118,7 +122,6 @@ const query = {
 }
 const historyList = ref([])
 
-const conversationDetail = ref({})
 const getList = () => {
 	service.historys({data: query})
 		.then((r: any) => {
@@ -131,20 +134,26 @@ const emits = defineEmits(['update']);
 const current = ref({})
 const conversation = (item: any) => {
 	current.value = item;
+	// store.commit('clear');
 	service.conversation({data: {id: item.id}})
 		.then((r: any) => {
 			const d = r.data;
-			const dialog = JSON.parse(d.chatRequst);
-			conversationDetail.value = {
-				id: item.id,
-				model: d.model,
-				dialog: dialog.filter((v: any) => v.role !== 'system'),
-				raw: d.chatRequst
-			}
+			const dialog: any[] = JSON.parse(d.chatRequst) || [];
+			const s: any[] = []
+			dialog.filter(i => i.role !== "system")
+				.forEach(i => {
+					const r = i.role;
+					const m = new Dialog(r === "user" ? DialogType.Human : DialogType.Ai, i.content, d.model)
+					m.complete()
+					s.push(m)
+				})
+			store.commit('setDialog', s)
+			store.commit('setId', item.id)
+			store.commit('setMessage', d.chatRequst)
+			dialogs.value = s;
+			aiModel.value = d.model ;
+			con.value.init(cloneDeep(s))
 			modelSelect.value = d.model
-			nextTick(() => {
-				con.value.init(conversationDetail.value, false)
-			})
 		})
 
 	emits('update', item)
@@ -155,53 +164,55 @@ const modelChange = (e: any) => {
 const aiModel = ref('gpt-3.5-turbo')
 const con = ref(null)
 const update = (s: string) => {
+	const arr = cloneDeep(store.state.dialogs)
+	const dialog = new Dialog(DialogType.Human, s, aiModel.value)
+	dialog.complete()
+	arr.push(dialog)
+	const dialog2 = new Dialog(DialogType.Ai, '', aiModel.value)
+	arr.push(dialog2)
 	const data = {
-		"conversationId": "",
+		"conversationId": store.state.id ? store.state.id : '',
 		"content": s,
 		"modeType": aiModel.value,
-		"messages": ""
+		"messages": store.state.message ? store.state.message : '',
 	}
 
-	if (conversationDetail.value.id) {
-		data.conversationId = conversationDetail.value.id
-		data.content = s
-		data.modeType = aiModel.value
-		data.messages = conversationDetail.value.raw;
-	}
-
+	const result = cloneDeep(arr)
+	con.value.init(arr)
+	dialogs.value = arr
+	// setTimeout(() => {
+	// 	result[result.length - 1].text = "r.data.content"
+	// 	if( aiModel.value === 'dall-e-3') {
+	// 		const s = "https://dalleprodsec.blob.core.windows.net/private/images/cbd52f49-6c67-4e8c-92e7-c815dff602f7/generated_00.png?se=2024-09-05T14%3A02%3A28Z&sig=wFyJoueTZ2ltu1xLo2YDJTWXX%2BAtJt228KRVK63LeXE%3D&ske=2024-09-07T01%3A55%3A11Z&skoid=e52d5ed7-0657-4f62-bc12-7e5dbb260a96&sks=b&skt=2024-08-31T01%3A55%3A11Z&sktid=33e01921-4d64-4f8c-a055-5bdaffd5e33d&skv=2020-10-02&sp=r&spr=https&sr=b&sv=2020-10-02"
+	// 		result[result.length - 1].text = s
+	// 		dialog2.addContent(s).complete()
+	// 	} else {
+	// 		dialog2.addContent("r.data.content").play()
+	// 	}
+	// 	store.commit('setDialog', result)
+	// }, 1000)
 	service.sendMsg({data}).then((r: any) => {
 		if (r.code === '1') {
-			const data = {
-				id: r.data.conversationId,
-				model: aiModel.value,
-				title: s
+			result[result.length - 1].text = r.data.content
+			store.commit('setDialog', result)
+			if( aiModel.value === 'dall-e-3') {
+				dialog2.addContent(r.data.content).complete()
+			} else {
+				dialog2.addContent(r.data.content).play()
 			}
 
-			if (!conversationDetail.value.id) {
-				historyList.value.unshift(data)
-			}
-
-			current.value = data
-			const dialog = JSON.parse(r.data.messages);
-			conversationDetail.value = {
-				id: data.id,
-				model: data.model,
-				dialog: dialog.filter((v: any) => v.role !== 'system'),
-				raw: r.data.messages
-			}
-
-			nextTick(() => {
-				con.value.init(conversationDetail.value, true)
-			})
 		}
 	})
 }
 
 const newDialog = () => {
 	current.value = {}
-	conversationDetail.value = {}
 	aiModel.value = 'gpt-3.5-turbo'
 	modelSelect.value = ''
+	store.commit('clear')
+	store.commit('setId', '')
+	store.commit('setMessage', '')
+	dialogs.value = []
 }
 onMounted(() => {
 	getList()
@@ -220,6 +231,7 @@ onMounted(() => {
 	justify-content: flex-start;
 	align-items: flex-start;
 	background: url("@/assets/bg.png") round;
+
 	& > .dialog-left {
 		width: 5.208rem;
 		height: 100%;
@@ -264,9 +276,11 @@ onMounted(() => {
 				margin-top: 1.667rem;
 				cursor: pointer;
 				transition: all .2s linear;
+
 				&:hover {
 					transform: scale(1.2);
 				}
+
 				& > img {
 					display: block;
 					width: 100%;

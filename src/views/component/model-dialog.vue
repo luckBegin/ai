@@ -15,6 +15,7 @@
 					<div class="content">
 						<div class="mark-down">
 							<Markdown :source="item.text" v-if="item.model !== 'dall-e-3' "/>
+							<img :src="last.text" alt="" v-if="last.model === 'dall-e-3' ">
 						</div>
 						<div class="mark-footer">
 							<div>
@@ -42,7 +43,7 @@
 					</div>
 
 					<div style="width: 36.458rem;margin-left: 0.521rem">
-						<el-skeleton :rows="3" animated />
+						<el-skeleton :rows="3" animated/>
 					</div>
 				</div>
 			</div>
@@ -68,10 +69,10 @@
 								以上内容为 AI 生成，不代表开发者立场，请勿删除或修改本标记
 							</div>
 							<div class="mark-down-icon">
-<!--								<div @click="refresh()" class="line">-->
-<!--									<img src="@/assets/refresh.png" alt="">-->
-<!--									<span>重新生成</span>-->
-<!--								</div>-->
+								<!--								<div @click="refresh()" class="line">-->
+								<!--									<img src="@/assets/refresh.png" alt="">-->
+								<!--									<span>重新生成</span>-->
+								<!--								</div>-->
 								<div @click="copy(last)">
 									<img src="@/assets/copy.png" alt="">
 									<span>{{ last.model === 'dall-e-3' ? '下载' : '复制' }}</span>
@@ -90,9 +91,48 @@ import {nextTick, onBeforeUnmount, onMounted, reactive, ref, watch} from "vue";
 import Markdown from 'vue3-markdown-it';
 import {ElMessage} from 'element-plus'
 import {Dialog, DialogType} from "@/util/dialog";
+import {useStore} from 'vuex'
+import {cloneDeep} from "lodash";
 
-const props = defineProps(['question', 'conversation']);
-const lastId = ref('')
+
+const store = useStore()
+const dialog = ref([]);
+// watch(store.state.dialogs, v => init(v) )
+const init = (v: any) => {
+	if (v.length) {
+		if (last.dialog) last.dialog.stop()
+		let l: Dialog;
+		const print = v[v.length -1].type === DialogType.Ai
+		if (print) {
+			l = v.pop();
+		}
+		const arr: any[] = [...v]
+		if (print) {
+			last.type = l.type;
+			last.model = l.model
+			last.dialog = l;
+			last.text = l.text
+			l.on(s => {
+				last.text = s;
+				if (container.value) {
+					container.value.scrollTop = container.value.scrollHeight;
+				}
+			})
+		}
+		dialog.value = arr
+		nextTick(() => {
+			if (container.value) {
+				container.value.scrollTop = container.value.scrollHeight;
+			}
+		})
+	} else {
+		dialog.value = []
+		last.type = null
+		last.text = null
+		last.dialog = null
+		last.model = null
+	}
+}
 const last = reactive({
 	type: null,
 	text: null,
@@ -100,51 +140,6 @@ const last = reactive({
 	model: null,
 });
 const container = ref('')
-const init = (d: any, print: boolean) => {
-	if (last.dialog) last.dialog.stop()
-	lastId.value = d.id;
-	const arr: any[] = []
-	let l;
-	if (print) {
-		l = d.dialog.pop();
-	}
-	d.dialog.forEach((i: any) => {
-		arr.push({
-			type: i.role === "assistant" ? DialogType.Ai : DialogType.Human,
-			text: i.content,
-			model: d.model
-		})
-	})
-	if (print) {
-		const m = new Dialog(
-			l.role === "assistant" ? DialogType.Ai : DialogType.Human, l.content,
-			d.model
-		)
-		last.type = m.type;
-		last.model = d.model
-		last.dialog = m;
-		if (d.model === 'dall-e-3') {
-			m.complete();
-			last.text = m.text
-		} else {
-			setTimeout(() => {
-				m.play(s => {
-					last.text = s;
-					if (container.value) {
-						container.value.scrollTop = container.value.scrollHeight;
-					}
-				})
-			} , 1500)
-		}
-	}
-	dialog.value = arr
-	nextTick(() => {
-		if (container.value) {
-			container.value.scrollTop = container.value.scrollHeight;
-		}
-	})
-}
-const dialog = ref([]);
 const copy = (item: any): void => {
 	if (item.model !== 'dall-e-3') {
 		const textarea = document.createElement('textarea');
@@ -162,14 +157,10 @@ const copy = (item: any): void => {
 	}
 }
 
-const refresh = () => {
-
-}
-
-onMounted(() => {
-})
 
 defineExpose({init})
+onMounted(() => {
+})
 onBeforeUnmount(() => {
 })
 </script>
@@ -178,9 +169,11 @@ onBeforeUnmount(() => {
 .show {
 	display: block;
 }
+
 .hide {
-	display: none ;
+	display: none;
 }
+
 .model-dialog {
 	width: 100%;
 	height: 100%;
